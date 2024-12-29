@@ -5,9 +5,86 @@ By using QuicheJS, you can significantly reduce your app/website bandwidth usage
 
 The library is especially effective for projects built with frameworks that generate large bundles, such as _Angular_, _React_, _Vue_, etc.
 
+Internet browsers do their best to cache resources, QuicheJS outperforms them and gives you full control over cached items.
+
 The name is a combination of the words **_Quick_** and **_Cache_**:
 
 **Qui**`ck`  + `Ca`**che** _==_ **Quiche**
+
+<br /><br /><br /><br />
+
+# Performance
+
+The performance difference between using static resources from a live server compared to cached ones is staggering.
+
+For testing purposes a few HTML documents were created, ranging from a total assets size between 500 KB to 20 MB. Results show unprecedented performance boost from using QuicheJS - the larger the static resources pool is, the higher the performance boost.
+
+> **NOTE**
+>
+> 1. The only difference between each benchmark is the total amount of resources and the total size. All tests were performed using the same:
+> - laptop
+> - internet connection
+> - web browser
+> - web server
+> 2. The results are the averages of 100 loads for each test
+
+Here are the results of the benchmarks:
+
+#### 500KB benchmark
+- Resources: `4`
+- Total size of resources: `500KB`
+> |                        	| **-QuicheJS** 	| **+QuicheJS cache** 	|
+> |------------------------	|:-------------:	|:-------------------:	|
+> | Load time              	|          107ms 	|                ~30ms 	|
+> | Time to full render   	|     **110ms.** 	|            **~30ms** 	|
+
+---
+
+<br />
+
+#### 1MB benchmark
+- Resources: `12`
+- Total size of resources: `1MB`
+> |                        	| **-QuicheJS** 	| **+QuicheJS cache** 	|
+> |------------------------	|:-------------:	|:-------------------:	|
+> | Load time              	|          129ms  |                ~41ms 	|
+> | Time to full render   	|     **134ms.** 	|            **~41ms** 	|
+
+---
+
+<br />
+
+#### 5MB benchmark
+- Resources: `20`
+- Total size of resources: `5MB`
+> |                        	| **-QuicheJS** 	| **+QuicheJS cache** 	|
+> |------------------------	|:-------------:	|:-------------------:	|
+> | Load time              	|          490ms  |                44ms 	|
+> | Time to full render   	|     **500ms.**  |            **45ms** 	|
+
+---
+
+<br />
+
+#### 10MB benchmark
+- Resources: `27`
+- Total size of resources: `10MB`
+> |                        	| **-QuicheJS** 	| **+QuicheJS cache** 	|
+> |------------------------	|:-------------:	|:-------------------:	|
+> | Load time              	|         1070ms  |                48ms 	|
+> | Time to full render   	|    **1182ms.**  |            **50ms** 	|
+
+---
+
+<br />
+
+#### 20MB benchmark
+- Resources: `33`
+- Total size of resources: `20MB`
+> |                        	| **-QuicheJS** 	| **+QuicheJS cache** 	|
+> |------------------------	|:-------------:	|:-------------------:	|
+> | Load time              	|         1910ms  |                51ms 	|
+> | Time to full render   	|    **2486ms.**  |            **54ms** 	|
 
 <br /><br /><br /><br />
 
@@ -17,7 +94,7 @@ QuicheJS is really easy and simple, requiring minimal configuration.
 To use `QuicheJS`, you need to import the library into your project and just run the method you want:
 
 ```html
-<script src='https://cdn.jsdelivr.net/gh/DinomNet/QuicheJS@main/dist/quiche.js'></script>
+<script src='https://cdn.jsdelivr.net/gh/DinomNet/QuicheJS@main/dist/quiche.min.js'></script>
 <script>
 // Optional configuration parameters
 let quiche_cfg={
@@ -222,7 +299,7 @@ let quiche=Quiche();
 /* Load 3 items:
  * - Reset stylesheet
  * - jQuery
- * - MonoSans font
+ * - MonaSans font
 */
 quiche.load(
   [
@@ -238,22 +315,22 @@ quiche.load(
         'url': 'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js'
     },
 
-    // MonoSans Medium
+    // MonaSans Medium
     {
         'type': 'font'
-        'name': 'MonoSans-Medium',
+        'name': 'MonaSans-Medium',
         'url': 'https://github.com/github/mona-sans/raw/refs/heads/main/fonts/webfonts/MonaSans-Medium.woff'
     }
   ]
 );
 ```
-This example gets a CSS file, jQuery, and MonoSans, from storage and directly adds them to the DOM tree.
+This example gets a CSS file, jQuery, and MonaSans, from storage and directly adds them to the DOM tree.
 > If the resources are not cached yet, they are downloaded and cached first.
 
 If you try this example of `load()` you will:
 - see the CSS rules applied to the document
 - have access to jQuery
-- have the MonoSans font available for your styling needs
+- have the MonaSans font available for your styling needs
 
 <br />
 
@@ -502,4 +579,111 @@ loadedImages.forEach(function(imgEl, key){
   imgEl.remove();
   delete(loadedImages[key]);
 });
+```
+
+# Recommended usage
+You can even cache the `QuicheJS` library, allowing your app to solely rely on offline resources.
+
+There are various ways to achieve this, but you can consider the following *The Recommended Approach* for doing this:
+
+```javascript
+<script>
+		function Load_My_Resources(){
+			var q=QuicheJS({
+				'debug':true,
+				'checkForUpdates': false,
+				'storage': 'cache'
+			});
+			q.cache([
+				{
+          'type':'img',
+          'url': 'https://yavuzceliker.github.io/sample-images/image-2.jpg'
+        },
+				{
+          'type':'js',
+          'url':'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js'
+        }
+			]);
+			q.load([
+				{
+          'type':'css',
+          'url': 'https://necolas.github.io/normalize.css/8.0.1/normalize.css'
+        },
+				{
+          'type':'font',
+          'url': 'https://github.com/github/mona-sans/raw/refs/heads/main/fonts/webfonts/MonaSans-Medium.woff',
+          'name':'MonaSans-Medium'
+        }
+			]);
+		}
+
+		// Load QuicheJS from cache
+		async function Load_QuicheJS(){
+
+			// Try to get QuicheJS from localStorage
+			var quicheLS=localStorage.getItem('Quiche.js');
+			if(quicheLS){
+				// Try to parse QuicheJS
+				var parsed=JSON.parse(quicheLS);
+				if(typeof parsed=='string'){
+					// Create a script tag to the head of the document for QuicheJS
+					var s=document.createElement('script');
+					s.innerHTML=parsed;
+					document.head.appendChild(s);
+
+					console.log('QuicheJS loaded from LocalStorage');
+					return;
+				}
+			}
+
+			// If the programming logic reached this, we need to download QuicheJS
+			try{
+				console.log('Local copy of QuicheJS was not found. Downloading it ...');
+				var url='https://cdn.jsdelivr.net/gh/DinomNet/QuicheJS@main/dist/quiche.min.js';
+				return await fetch(url).then((r)=>{
+					if(!r.ok){throw new Error(`HTTP error on ${url}! status: ${r.status}`);}
+
+					return r.text().then(code=>{
+						localStorage.setItem(
+							'Quiche.js',
+							JSON.stringify(code)
+						);
+
+						// Create a script tag to the head of the document for QuicheJS
+						var s=document.createElement('script');
+						s.innerHTML=code;
+						document.head.appendChild(s);
+
+						console.log('Library downloaded and saved.');
+					});
+				});
+			}
+			catch(e){console.error(e);}
+		}
+
+		Load_QuicheJS().then(()=>{
+			Load_My_Resources();
+		});
+	</script>
+```
+
+<br /><br /><br /><br />
+
+# Contributions and Issues
+If you can help improve the code, or make it easier for others to use, please submit a PR with your suggestion. You can rest assure that all submissions will be carefully and thoroughly revised and considered.
+
+**Any and all contributions are welcome and encouraged!**
+
+In case you encounter any problems, or you have questions unanswered in this document - open up an issue and ask away, don't be shy 😌.
+
+---
+
+<br /><br /><br /><br />
+
+```
+If this library has helped you, please consider leaving a ⭐️ on the repo.
+It would be much appreciated!
+
+
+Happy caching! 🥰
 ```
