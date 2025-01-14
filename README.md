@@ -584,87 +584,77 @@ loadedImages.forEach(function(imgEl, key){
 # Recommended usage
 You can even cache the `QuicheJS` library, allowing your app to solely rely on offline resources.
 
-There are various ways to achieve this, but you can consider the following *The Recommended Approach* for doing this:
+There are various ways to achieve this, but you can consider the following method *The Recommended Approach* for doing this, just replace the demo resources with your own:
 
 ```javascript
 <script>
-		function Load_My_Resources(){
-			var q=QuicheJS({
-				'debug':true,
-				'checkForUpdates': false,
-				'storage': 'cache'
-			});
-			q.cache([
-				{
-          'type':'img',
-          'url': 'https://yavuzceliker.github.io/sample-images/image-2.jpg'
-        },
-				{
-          'type':'js',
-          'url':'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js'
-        }
-			]);
-			q.load([
-				{
-          'type':'css',
-          'url': 'https://necolas.github.io/normalize.css/8.0.1/normalize.css'
-        },
-				{
-          'type':'font',
-          'url': 'https://github.com/github/mona-sans/raw/refs/heads/main/fonts/webfonts/MonaSans-Medium.woff',
-          'name':'MonaSans-Medium'
-        }
-			]);
-		}
+  function Load_My_Resources(){
+    var q=QuicheJS({
+      'debug':true,
+      'checkForUpdates': false,
+      'storage': 'cache'
+    });
 
-		// Load QuicheJS from cache
-		async function Load_QuicheJS(){
+    q.cache([
+      {'type':'img', 'url': 'https://yavuzceliker.github.io/sample-images/image-2.jpg'},
+      {'type':'js', 'url':'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js'}
+    ]);
 
-			// Try to get QuicheJS from localStorage
-			var quicheLS=localStorage.getItem('Quiche.js');
-			if(quicheLS){
-				// Try to parse QuicheJS
-				var parsed=JSON.parse(quicheLS);
-				if(typeof parsed=='string'){
-					// Create a script tag to the head of the document for QuicheJS
-					var s=document.createElement('script');
-					s.innerHTML=parsed;
-					document.head.appendChild(s);
+    q.load([
+      {'type':'css', 'url': 'https://necolas.github.io/normalize.css/8.0.1/normalize.css'},
+      {
+        'type':'font',
+        'url': 'https://github.com/github/mona-sans/raw/refs/heads/main/fonts/webfonts/MonaSans-Medium.woff',
+        'name':'MonaSans-Medium'
+      }
+    ]);
+  }
 
-					console.log('QuicheJS loaded from LocalStorage');
-					return;
-				}
-			}
+  // Load QuicheJS from cache
+  async function Load_QuicheJS(){
 
-			// If the programming logic reached this, we need to download QuicheJS
-			try{
-				console.log('Local copy of QuicheJS was not found. Downloading it ...');
-				var url='https://cdn.jsdelivr.net/gh/DinomNet/QuicheJS@main/dist/quiche.min.js';
-				return await fetch(url).then((r)=>{
-					if(!r.ok){throw new Error(`HTTP error on ${url}! status: ${r.status}`);}
+    // Try to get QuicheJS from localStorage
+    var quicheLS=localStorage.getItem('Quiche.js');
+    if(quicheLS){
+      // Try to parse QuicheJS
+      var parsed=JSON.parse(quicheLS);
+      if(typeof parsed=='string'){
+        // Create a script tag to the head of the document for QuicheJS
+        var s=document.createElement('script');
+        s.innerHTML=parsed;
+        document.head.appendChild(s);
 
-					return r.text().then(code=>{
-						localStorage.setItem(
-							'Quiche.js',
-							JSON.stringify(code)
-						);
+        console.log('QuicheJS loaded from LocalStorage');
+        return;
+      }
+    }
 
-						// Create a script tag to the head of the document for QuicheJS
-						var s=document.createElement('script');
-						s.innerHTML=code;
-						document.head.appendChild(s);
+    // If the programming logic reached this, we need to download QuicheJS
+    try{
+      console.log('Local copy of QuicheJS was not found. Downloading it ...');
+      var url='https://cdn.jsdelivr.net/gh/DinomNet/QuicheJS@main/dist/quiche.min.js';
+      return await fetch(url).then((r)=>{
+        if(!r.ok){throw new Error(`HTTP error on ${url}! status: ${r.status}`);}
 
-						console.log('Library downloaded and saved.');
-					});
-				});
-			}
-			catch(e){console.error(e);}
-		}
+        return r.text().then(code=>{
+          localStorage.setItem('Quiche.js', JSON.stringify(code));
 
-		Load_QuicheJS().then(()=>{
-			Load_My_Resources();
-		});
-	</script>
+          // Create a script tag to the head of the document for QuicheJS
+          var s=document.createElement('script');
+          s.innerHTML=code;
+          document.head.appendChild(s);
+
+          console.log('Library downloaded and saved.');
+        });
+      });
+    }
+    catch(e){console.error(e);}
+  }
+
+  Load_QuicheJS().then(()=>{
+    Load_My_Resources();
+  });
+</script>
 ```
 
 <br /><br /><br /><br />
