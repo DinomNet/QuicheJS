@@ -356,6 +356,9 @@
 			// Returns {content, type} object
 			async function downloadAndStore(url, type){
 				return await download(url, type).then(({hash, file})=>{
+					// Ensure download was successful to avoid creating empty cache objects
+					if(!hash || !file){return false;}
+
 					return store(url, file, hash, type).then((s)=>{
 						if(cfg.debug){console.log('Downloaded and stored. Version: '+hash);}
 						return s;
