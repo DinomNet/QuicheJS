@@ -1,6 +1,6 @@
 /**
  * QuicheJS by Dinom
- * Version: v1.0.1
+ * Version: v1.0.2
  * Official Repository: https://github.com/DinomNet/QuicheJS/
  * 
  * MIT License
@@ -193,7 +193,7 @@
 				return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))).map(b=>b.toString(16).padStart(2,'0')).join('');
 			}
 
-			// Function creating elements in the DOM, using an object with {type, data, name* (font) }
+			// Function creating elements in the DOM, using an object with {type, content, name* (font) }
 			function renderItem(item){
 				switch(item.type){
 					case 'js':
@@ -483,7 +483,12 @@
 					if(cfg.checkForUpdates){
 						if(!__.online){
 							if(cfg.debug){console.log('Device is Offline, skipping update check.');}
-							renderItem(item);
+							getFromStorage(item.url).then((r)=>{
+								// Pass name to renderItem if it is a font
+								if(item.type=='font' && item.hasOwnProperty('name')){r.name=item.name;}
+		
+								renderItem(r);
+							})
 							continue;
 						}
 
@@ -493,7 +498,12 @@
 						// Compare versions
 						if(storedVersion===liveVersion){
 							if(cfg.debug){console.log('Cached version is up-to-date.');}
-							renderItem(item);
+							getFromStorage(item.url).then((r)=>{
+								// Pass name to renderItem if it is a font
+								if(item.type=='font' && item.hasOwnProperty('name')){r.name=item.name;}
+		
+								renderItem(r);
+							})
 							continue;
 						}
 
@@ -506,7 +516,7 @@
 							// Pass name to renderItem if it is a font
 							if(item.type=='font' && item.hasOwnProperty('name')){r.name=item.name;}
 
-							renderItem(item);
+							renderItem(r);
 						});
 						continue;
 					}
