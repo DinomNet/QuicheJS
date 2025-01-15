@@ -1,6 +1,6 @@
 /**
  * QuicheJS by Dinom
- * Version: v1.0.0
+ * Version: v1.0.1
  * Official Repository: https://github.com/DinomNet/QuicheJS/
  * 
  * MIT License
