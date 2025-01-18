@@ -1,6 +1,6 @@
 /**
  * QuicheJS by Dinom
- * Version: v1.0.2
+ * Version: v1.0.3
  * Official Repository: https://github.com/DinomNet/QuicheJS/
  * 
  * MIT License
@@ -434,7 +434,10 @@
 
 				// Ensure the library has loaded before proceeding
 				if(!__.loaded){await __.loading;}
-	
+
+				// Keep track of resource promises
+				let resThreads=[];
+
 				for(let item of list){
 					if(cfg.debug){console.log('Processing '+item.url);}
 
@@ -458,77 +461,93 @@
 
 					if(cfg.debug){console.log('Loading '+item.url+' ...');}
 
-					// Check if resource is in storage
-					var storedVersion=await check(item.url).then(storedVersion=>{return storedVersion;});
-					
-					// Cache not found
-					if(!storedVersion){
-						if(cfg.debug){console.log('Cache not found, downloading ...');}
+					// Split each resource in a separate thread
+					resThreads.push(new Promise(async (resolveThread)=>{
 
-						// Not found in storage, attempt to download it
-						if(!__.online){
-							console.error('Device is Offline, cannot download. Terminating ...');
-							return false;
+						// Check if resource is in storage
+						var storedVersion=await check(item.url).then(storedVersion=>{return storedVersion;});
+						
+						// Cache not found
+						if(!storedVersion){
+							if(cfg.debug){console.log('Cache not found, downloading ...');}
+
+							// Not found in storage, attempt to download it
+							if(!__.online){
+								console.error('Device is Offline, cannot download. Terminating ...');
+								return false;
+							}
+							downloadAndStore(item.url, item.type).then((r)=>{
+								// Pass name to renderItem if it is a font
+								if(item.type=='font' && item.hasOwnProperty('name')){r.name=item.name;}
+
+								renderItem(r);
+								resolveThread();
+							});
+							// Continue with next resource
+							return;
 						}
-						downloadAndStore(item.url, item.type).then((r)=>{
+
+						// If updates are enabled
+						if(cfg.checkForUpdates){
+							if(!__.online){
+								if(cfg.debug){console.log('Device is Offline, skipping update check.');}
+								getFromStorage(item.url).then((r)=>{
+									// Pass name to renderItem if it is a font
+									if(item.type=='font' && item.hasOwnProperty('name')){r.name=item.name;}
+			
+									renderItem(r);
+									resolveThread();
+								})
+								// Continue with next resource
+								return;
+							}
+
+							// Get version of live resource
+							var liveVersion=await getHeadersHash(item.url).then(liveVersion=>{return liveVersion;});
+
+							// Compare versions
+							if(storedVersion===liveVersion){
+								if(cfg.debug){console.log('Cached version is up-to-date.');}
+								getFromStorage(item.url).then((r)=>{
+									// Pass name to renderItem if it is a font
+									if(item.type=='font' && item.hasOwnProperty('name')){r.name=item.name;}
+			
+									renderItem(r);
+									resolveThread();
+								})
+								// Continue with next resource
+								return;
+							}
+
+							if(cfg.debug){console.log('Versions mismatch, updating ...');}
+
+							// Attempt to download and store it
+							downloadAndStore(item.url, item.type).then((r)=>{
+								if(cfg.debug){console.log('Updated to the latest version.');}
+
+								// Pass name to renderItem if it is a font
+								if(item.type=='font' && item.hasOwnProperty('name')){r.name=item.name;}
+
+								renderItem(r);
+								resolveThread();
+							});
+							// Continue with next resource
+							return;
+						}
+
+						// Directly try to load and render the item
+						getFromStorage(item.url).then((r)=>{
 							// Pass name to renderItem if it is a font
 							if(item.type=='font' && item.hasOwnProperty('name')){r.name=item.name;}
 
 							renderItem(r);
-						});
-						continue;
-					}
-
-					// If updates are enabled
-					if(cfg.checkForUpdates){
-						if(!__.online){
-							if(cfg.debug){console.log('Device is Offline, skipping update check.');}
-							getFromStorage(item.url).then((r)=>{
-								// Pass name to renderItem if it is a font
-								if(item.type=='font' && item.hasOwnProperty('name')){r.name=item.name;}
-		
-								renderItem(r);
-							})
-							continue;
-						}
-
-						// Get version of live resource
-						var liveVersion=await getHeadersHash(item.url).then(liveVersion=>{return liveVersion;});
-
-						// Compare versions
-						if(storedVersion===liveVersion){
-							if(cfg.debug){console.log('Cached version is up-to-date.');}
-							getFromStorage(item.url).then((r)=>{
-								// Pass name to renderItem if it is a font
-								if(item.type=='font' && item.hasOwnProperty('name')){r.name=item.name;}
-		
-								renderItem(r);
-							})
-							continue;
-						}
-
-						if(cfg.debug){console.log('Versions mismatch, updating ...');}
-
-						// Attempt to download and store it
-						downloadAndStore(item.url, item.type).then((r)=>{
-							if(cfg.debug){console.log('Updated to the latest version.');}
-
-							// Pass name to renderItem if it is a font
-							if(item.type=='font' && item.hasOwnProperty('name')){r.name=item.name;}
-
-							renderItem(r);
-						});
-						continue;
-					}
-
-					// Directly try to load and render the item
-					getFromStorage(item.url).then((r)=>{
-						// Pass name to renderItem if it is a font
-						if(item.type=='font' && item.hasOwnProperty('name')){r.name=item.name;}
-
-						renderItem(r);
-					})
+							resolveThread();
+						})
+					}));
 				};
+
+				// Wait for all threads to complete before returning, ensuring all resources are loaded
+				return await Promise.all(resThreads);
 			}
 
 			// Function to ensure resource is downloaded and stored in cache (accepts URL string or Array)
